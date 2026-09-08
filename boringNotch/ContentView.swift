@@ -43,7 +43,9 @@ struct ContentView: View {
     @Default(.notchGlassStrength) var glassStrength
 
     // Use standardized animations from StandardAnimations enum
-    private let animationSpring = StandardAnimations.interactive
+    // Computed (not `let`) so it re-reads StandardAnimations.interactive each
+    // time — which now reflects the live "Animation speed" setting.
+    private var animationSpring: Animation { StandardAnimations.interactive }
 
     private let extendedHoverPadding: CGFloat = 30
     private let zeroHeightHoverPadding: CGFloat = 10
@@ -233,6 +235,14 @@ struct ContentView: View {
                         vm.notchState == .open ? openedInsets.top : cornerRadiusInsets.closed.bottom
                     )
                     .padding([.horizontal, .bottom], vm.notchState == .open ? 12 : 0)
+                    // Animate the WIDTH between the physical notch width and the
+                    // full panel width so the shape grows/shrinks in BOTH
+                    // dimensions from the notch (a true morph), instead of the
+                    // width snapping to full while only the height animates.
+                    .frame(
+                        width: vm.notchState == .open ? openNotchSize.width : vm.closedNotchSize.width,
+                        alignment: .top
+                    )
                     // Liquid Glass panel when open (macOS 26+); solid black when
                     // closed so it still blends into the physical hardware notch.
                     .notchPanelBackground(isOpen: vm.notchState == .open, shape: currentNotchShape, strength: glassStrength)
@@ -303,7 +313,7 @@ struct ContentView: View {
                                 guard !Task.isCancelled else { return }
                                 await MainActor.run {
                                     if self.vm.notchState == .open && !self.isHovering && !self.vm.isBatteryPopoverActive && !SharingStateManager.shared.preventNotchClose {
-                                        self.vm.close()
+                                        self.doClose()
                                     }
                                 }
                             }
@@ -352,7 +362,7 @@ struct ContentView: View {
                                 guard !Task.isCancelled else { return }
                                 await MainActor.run {
                                     if !self.vm.isBatteryPopoverActive && !self.isHovering && self.vm.notchState == .open && !SharingStateManager.shared.preventNotchClose {
-                                        self.vm.close()
+                                        self.doClose()
                                     }
                                 }
                             }
@@ -415,7 +425,7 @@ struct ContentView: View {
 
                 dropInteraction.dropEvent = false
                 if !SharingStateManager.shared.preventNotchClose {
-                    vm.close()
+                    doClose()
                 }
             }
         }
@@ -586,9 +596,14 @@ struct ContentView: View {
                     }
                 }
                 .transition(
-                    .scale(scale: 0.8, anchor: .top)
+                    // Emerge from / retract into the physical notch: the content
+                    // slides out of the top (the notch) as the shape grows and
+                    // slides back up into it as the shape shrinks, clipped by the
+                    // notch shape the whole time — a reveal, not a pop. Stays
+                    // present during both animations so the shrinking shape can
+                    // swallow it instead of it vanishing first.
+                    .move(edge: .top)
                     .combined(with: .opacity)
-                    .animation(.smooth(duration: 0.35))
                 )
                 .zIndex(1)
                 .allowsHitTesting(vm.notchState == .open)
@@ -816,6 +831,16 @@ struct ContentView: View {
         return didOpen
     }
 
+    /// Collapse the notch back into the physical notch using the same animation
+    /// used to open it, so closing is as smooth as opening. Without wrapping the
+    /// close in an animation transaction, the panel content's scale/fade
+    /// transition never runs and the notch snaps shut abruptly.
+    private func doClose() {
+        withAnimation(animationSpring) {
+            vm.close()
+        }
+    }
+
     // MARK: - Hover Management
 
     private func handleHover(_ hovering: Bool) {
@@ -872,7 +897,7 @@ struct ContentView: View {
                     self.notificationManager.resumeDismiss()
 
                     if self.vm.notchState == .open && !self.vm.isBatteryPopoverActive && !SharingStateManager.shared.preventNotchClose {
-                        self.vm.close()
+                        self.doClose()
                     }
                 }
             }
@@ -921,9 +946,9 @@ struct ContentView: View {
             withAnimation(animationSpring) {
                 isHovering = false
             }
-            if !SharingStateManager.shared.preventNotchClose { 
+            if !SharingStateManager.shared.preventNotchClose {
                 gestureProgress = .zero
-                vm.close()
+                doClose()
             }
 
             if Defaults[.enableHaptics] {

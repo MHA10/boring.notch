@@ -12,8 +12,17 @@ import SwiftUI
 // MARK: - Standardized Animations
 /// Centralized animation definitions for consistent UI behavior across the app.
 enum StandardAnimations {
-    /// Interactive spring for responsive UI (used for notch interactions)
-    static let interactive = Animation.interactiveSpring(response: 0.38, dampingFraction: 0.8, blendDuration: 0)
+    /// Interactive spring for responsive UI (used for notch open/close/hover).
+    /// Computed (not a stored `let`) so it honors the "Animation speed" setting:
+    /// a bigger multiplier shortens the response = faster. This is what makes the
+    /// speed slider affect the CONTENT transition, not just the notch shape.
+    static var interactive: Animation {
+        Animation.interactiveSpring(
+            response: 0.38 / Defaults[.animationSpeedMultiplier],
+            dampingFraction: 0.8,
+            blendDuration: 0
+        )
+    }
     
     /// Spring animation for opening the notch
     static var open: Animation {
