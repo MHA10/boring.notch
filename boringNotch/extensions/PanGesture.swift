@@ -120,6 +120,14 @@ private struct ScrollMonitor: NSViewRepresentable {
                 return
             }
 
+            // Don't hijack scrolls meant for a scrollable list inside the notch
+            // (clipboard / system lists) — let the list scroll instead of
+            // treating the scroll as a notch open/close gesture.
+            if pointerIsOverScrollView(event) {
+                scheduleEndTimeout()
+                return
+            }
+
             // Only consider scroll events that are primarily along the configured axis.
             let absDX = abs(event.scrollingDeltaX)
             let absDY = abs(event.scrollingDeltaY)
@@ -159,6 +167,20 @@ private struct ScrollMonitor: NSViewRepresentable {
             }
             // Schedule a timeout to end the gesture if no further scroll events arrive.
             scheduleEndTimeout()
+        }
+
+        /// True if the pointer is over a scrollable list, so its scroll should
+        /// go to the list rather than opening/closing the notch.
+        private func pointerIsOverScrollView(_ event: NSEvent) -> Bool {
+            guard let contentView = event.window?.contentView else { return false }
+            var view = contentView.hitTest(event.locationInWindow)
+            while let v = view {
+                if v is NSScrollView { return true }
+                let name = String(describing: type(of: v))
+                if name.contains("ScrollView") || name.contains("ClipView") { return true }
+                view = v.superview
+            }
+            return false
         }
     }
 }

@@ -87,11 +87,13 @@ closing snapped shut abruptly.)
   fast it opens and closes. The speed now applies to **both** the notch shape *and* the
   content (we made `StandardAnimations.interactive` honor the speed multiplier).
 
-### 5. System tab (disk usage)
-**What:** a **System** tab in the notch that groups system stats as sections — currently
-**Disk**: each mounted volume's **used / free / total** with a color-coded bar. Designed to
-hold more later (RAM, CPU).
-- **Where:** `boringNotch/private/DiskManager.swift` (reads volume space, 30s refresh) and
+### 5. System tab (CPU, memory, disk)
+**What:** a **System** tab in the notch with two **sub-tabs** — **Performance** and **Disk**:
+- **Performance** — live **CPU** load % and **Memory** used/total, each with a bar (CPU updates
+  ~every 2s; Memory ≈ Activity Monitor's "Memory Used").
+- **Disk** — each mounted volume's **used / free / total**, with a bar.
+- **Where:** `boringNotch/private/SystemStatsManager.swift` (CPU load + RAM via `host_statistics`,
+  sandbox-safe), `boringNotch/private/DiskManager.swift` (volume space, 30s refresh), and
   `boringNotch/private/SystemView.swift` (the tab UI).
 - **Batteries — tried and dropped (macOS 26 limitation):** a Mac + accessories battery widget
   was prototyped then removed. The Mac's own battery is readable, but wireless accessory
@@ -106,6 +108,30 @@ hold more later (RAM, CPU).
 - **Toggle:** Settings → Appearance → *Additional features* → **"System (disk usage)"**.
 - **Tabs:** tab icons were tightened for more clearance from the physical notch
   (`TabButton` horizontal padding).
+
+### 6. Drag-to-reorder tabs
+**What:** both the main notch tabs (Home / Shelf / Clipboard / System) and the System
+sub-tabs (Performance / Disk) can be **reordered by click-dragging**; the order is saved, and
+the System tab opens to whichever sub-tab is first.
+- **Where:** `boringNotch/components/Tabs/TabSelectionView.swift` (main tabs) and the sub-tab
+  picker in `boringNotch/private/SystemView.swift`. Uses a manual `DragGesture` that measures
+  tab frames (`TabFramePreference`) and reorders live — SwiftUI's `.onDrag`/`.onDrop` didn't
+  fire reliably in the floating panel. Order persists via Defaults keys `tabOrder` and
+  `systemSubTabOrder`.
+
+### 7. Hover-to-open scoped to the notch
+**What:** with the notch closed, it now opens only when the pointer is actually over the
+physical notch — not anywhere the (wider) open panel's window covers.
+- **Where:** `pointerIsOverClosedNotch()` in `boringNotch/ContentView.swift`, checked before
+  the hover-open fires. Respects the "extend hover area" advanced setting (if on, the larger
+  zone is kept).
+
+### 8. List scrolling no longer closes the notch
+**What:** scrolling up inside a list (Clipboard, System) used to trigger the swipe-up-to-close
+gesture. Now a scroll over a scrollable list goes to the list; the close gesture only fires
+over non-scrolling areas.
+- **Where:** `pointerIsOverScrollView()` in `boringNotch/extensions/PanGesture.swift` — the
+  scroll-wheel gesture monitor ignores scrolls landing on an `NSScrollView` / `NSClipView`.
 
 ---
 

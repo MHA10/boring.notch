@@ -144,6 +144,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Start disk-usage polling from launch.
         DiskManager.shared.start()
 
+        // Start CPU/memory polling from launch.
+        SystemStatsManager.shared.start()
+
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(screenConfigurationDidChange),

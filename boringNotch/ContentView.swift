@@ -871,7 +871,12 @@ struct ContentView: View {
                   !shouldDisplayNowPlayingFallbackNotice,
                   !coordinator.shouldShowSneakPeek(on: vm.screenUUID),
                   Defaults[.openNotchOnHover] else { return }
-            
+
+            // Only open when the pointer is actually over the physical notch,
+            // not anywhere the (wider) open-panel window covers — unless the
+            // user opted into a larger hover area.
+            if !Defaults[.extendHoverArea] && !pointerIsOverClosedNotch() { return }
+
             hoverTask = Task {
                 try? await Task.sleep(for: .seconds(Defaults[.minimumHoverDuration]))
                 guard !Task.isCancelled else { return }
@@ -880,8 +885,9 @@ struct ContentView: View {
                     guard self.vm.notchState == .closed,
                           self.isHovering,
                           !self.shouldDisplayNowPlayingFallbackNotice,
-                          !self.coordinator.shouldShowSneakPeek(on: self.vm.screenUUID) else { return }
-                    
+                          !self.coordinator.shouldShowSneakPeek(on: self.vm.screenUUID),
+                          Defaults[.extendHoverArea] || self.pointerIsOverClosedNotch() else { return }
+
                     self.doOpen()
                 }
             }
@@ -904,6 +910,25 @@ struct ContentView: View {
                 }
             }
         }
+    }
+
+    /// Whether the pointer is physically over the closed notch (top-center of
+    /// the selected screen). Keeps hover-to-open scoped to the notch instead of
+    /// the whole area the open panel's window covers.
+    private func pointerIsOverClosedNotch() -> Bool {
+        guard let screen = NSScreen.screen(withUUID: coordinator.selectedScreenUUID) ?? NSScreen.main else {
+            return true
+        }
+        let mouse = NSEvent.mouseLocation
+        let size = vm.closedNotchSize
+        let centerX = screen.frame.midX
+        let halfWidth = size.width / 2 + 4
+        let top = screen.frame.maxY
+        let bottom = top - (size.height + 6)
+        return mouse.x >= centerX - halfWidth
+            && mouse.x <= centerX + halfWidth
+            && mouse.y <= top
+            && mouse.y >= bottom
     }
 
     // MARK: - Gesture Handling

@@ -267,6 +267,10 @@ extension Defaults.Keys {
     // MARK: System tab (disk today; room for RAM/CPU/battery health)
     static let enableSystemTab = Key<Bool>("enableSystemTab", default: true)
 
+    // MARK: Draggable tab order (persists click-drag reordering)
+    static let tabOrder = Key<[String]>("tabOrder", default: ["home", "shelf", "clipboard", "system"])
+    static let systemSubTabOrder = Key<[String]>("systemSubTabOrder", default: ["Performance", "Disk"])
+
     static let showNotHumanFace = Key<Bool>("showNotHumanFace", default: false)
     static let tileShowLabels = Key<Bool>("tileShowLabels", default: false)
     static let showCalendar = Key<Bool>("showCalendar", default: false)
