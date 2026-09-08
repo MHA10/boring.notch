@@ -88,12 +88,17 @@ closing snapped shut abruptly.)
   content (we made `StandardAnimations.interactive` honor the speed multiplier).
 
 ### 5. System tab (disk usage)
-**What:** a **System** tab in the notch — currently shows each mounted volume's
-**used / free / total** space with a color-coded bar (green → orange → red as it fills up).
-It's one tab designed to hold future system stats (RAM, CPU, battery health) as extra
-sections, so those don't each grab their own tab slot.
-- **Where:** `boringNotch/private/DiskManager.swift` (reads volume space, refreshes every
-  30s) and `boringNotch/private/SystemView.swift` (the tab UI).
+**What:** a **System** tab in the notch that groups system stats as sections — currently
+**Disk**: each mounted volume's **used / free / total** with a color-coded bar. Designed to
+hold more later (RAM, CPU).
+- **Where:** `boringNotch/private/DiskManager.swift` (reads volume space, 30s refresh) and
+  `boringNotch/private/SystemView.swift` (the tab UI).
+- **Batteries — tried and dropped (macOS 26 limitation):** a Mac + accessories battery widget
+  was prototyped then removed. The Mac's own battery is readable, but wireless accessory
+  (keyboard/mouse) battery is **not reachable from a third-party app at all** — not via the IO
+  registry, `system_profiler`, or even the private Bluetooth framework (which returns nothing
+  even *outside* the sandbox on macOS 26; Apple gates it behind system-only entitlements). The
+  Mac's % already shows in the notch header, so the section was dropped rather than duplicate it.
 - **Free space shown both ways:** the headline "free" is the **available** figure (includes
   purgeable space — matches Finder / About This Mac); when purgeable space exists it also
   shows the **raw free** number (matches Disk Utility's bar) and how much is purgeable.

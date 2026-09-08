@@ -30,7 +30,7 @@ struct SystemView: View {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 12) {
                     diskSection
-                    // Future sections go here: Memory, CPU, Battery health.
+                    // Future sections go here: Memory, CPU.
                 }
             }
         }
