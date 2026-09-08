@@ -256,6 +256,13 @@ extension Defaults.Keys {
     static let lightingEffect = Key<Bool>("lightingEffect", default: true)
     static let enableShadow = Key<Bool>("enableShadow", default: true)
     static let cornerRadiusScaling = Key<Bool>("cornerRadiusScaling", default: true)
+    // Liquid Glass tint strength for the notch panel & OSD (macOS 26+).
+    // 0 = fully see-through glass, 1 = solid black. Tunable live in Appearance.
+    static let notchGlassStrength = Key<Double>("notchGlassStrength", default: 0.25)
+
+    // MARK: Clipboard history
+    static let enableClipboardHistory = Key<Bool>("enableClipboardHistory", default: true)
+    static let clipboardHistory = Key<[ClipboardEntry]>("clipboardHistory", default: [])
 
     static let showNotHumanFace = Key<Bool>("showNotHumanFace", default: false)
     static let tileShowLabels = Key<Bool>("tileShowLabels", default: false)

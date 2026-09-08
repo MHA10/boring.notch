@@ -40,6 +40,7 @@ struct ContentView: View {
     @Namespace var albumArtNamespace
 
     @Default(.showNotHumanFace) var showNotHumanFace
+    @Default(.notchGlassStrength) var glassStrength
 
     // Use standardized animations from StandardAnimations enum
     private let animationSpring = StandardAnimations.interactive
@@ -232,7 +233,9 @@ struct ContentView: View {
                         vm.notchState == .open ? openedInsets.top : cornerRadiusInsets.closed.bottom
                     )
                     .padding([.horizontal, .bottom], vm.notchState == .open ? 12 : 0)
-                    .background(.black)
+                    // Liquid Glass panel when open (macOS 26+); solid black when
+                    // closed so it still blends into the physical hardware notch.
+                    .notchPanelBackground(isOpen: vm.notchState == .open, shape: currentNotchShape, strength: glassStrength)
                     .clipShape(currentNotchShape)
                           .overlay(alignment: .top) {
                               displayClosedNotchHeight.isZero && vm.notchState == .closed ? nil
@@ -577,6 +580,8 @@ struct ContentView: View {
                                 dropInteraction: vm.dropInteraction,
                                 animation: vm.animation
                             )
+                        case .clipboard:
+                            ClipboardHistoryView()
                         }
                     }
                 }
@@ -1046,6 +1051,21 @@ struct GeneralDropTargetDelegate: DropDelegate {
 
     func performDrop(info: DropInfo) -> Bool {
         return false
+    }
+}
+
+/// Notch panel background: Apple's Liquid Glass (tinted) when the notch is
+/// open on macOS 26+, otherwise the original solid black. Kept black while
+/// closed so the fake notch still blends with the Mac's physical notch, and
+/// as the fallback on the app's macOS 14 deployment target.
+private extension View {
+    @ViewBuilder
+    func notchPanelBackground(isOpen: Bool, shape: NotchShape, strength: Double) -> some View {
+        if isOpen, #available(macOS 26.0, *) {
+            self.glassEffect(.regular.tint(.black.opacity(strength)), in: shape)
+        } else {
+            self.background(.black)
+        }
     }
 }
 

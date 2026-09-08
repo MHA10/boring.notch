@@ -11,6 +11,7 @@ import SwiftUI
 struct AppearanceSettingsView: View {
     @ObservedObject var coordinator = BoringViewCoordinator.shared
     @Default(.sliderColor) var sliderColor
+    @Default(.notchGlassStrength) var glassStrength
 
     let icons: [String] = ["logo2"]
     @State private var selectedIcon: String = "logo2"
@@ -32,6 +33,27 @@ struct AppearanceSettingsView: View {
 
             } header: {
                 Text("General")
+            }
+
+            if #available(macOS 26.0, *) {
+                Section {
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Text("Glass strength")
+                            Spacer()
+                            Text(glassStrength, format: .percent.precision(.fractionLength(0)))
+                                .foregroundStyle(.secondary)
+                                .monospacedDigit()
+                        }
+                        Slider(value: $glassStrength, in: 0...1)
+                    }
+                } header: {
+                    Text("Liquid Glass")
+                } footer: {
+                    Text("How much the notch's glass is tinted. Lower = more see-through (wallpaper shows through); higher = more solid black. Open the notch to preview live.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
 
             Section {
@@ -71,10 +93,17 @@ struct AppearanceSettingsView: View {
                 Defaults.Toggle(key: .showNotHumanFace) {
                     Text("Show cool face animation while inactive")
                 }
+                Defaults.Toggle(key: .enableClipboardHistory) {
+                    Text("Clipboard history")
+                }
             } header: {
                 HStack {
                     Text("Additional features")
                 }
+            } footer: {
+                Text("Keeps your last 30 copied text snippets in a notch tab. Items a password manager marks secret are ignored.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
         .accentColor(.effectiveAccent)

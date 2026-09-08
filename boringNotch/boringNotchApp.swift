@@ -137,6 +137,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
 
+        // Start capturing clipboard history from launch (internally guarded by
+        // the enableClipboardHistory setting).
+        ClipboardManager.shared.start()
+
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(screenConfigurationDidChange),

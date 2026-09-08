@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Defaults
 
 struct TabModel: Identifiable {
     let id = UUID()
@@ -21,10 +22,21 @@ let tabs = [
 
 struct TabSelectionView: View {
     @ObservedObject var coordinator = BoringViewCoordinator.shared
+    @Default(.enableClipboardHistory) var clipboardEnabled
     @Namespace var animation
+
+    /// Base tabs, plus the Clipboard tab only when the feature is enabled.
+    private var visibleTabs: [TabModel] {
+        var result = tabs
+        if clipboardEnabled {
+            result.append(TabModel(label: "Clipboard", icon: "doc.on.clipboard.fill", view: .clipboard))
+        }
+        return result
+    }
+
     var body: some View {
         HStack(spacing: 0) {
-            ForEach(tabs) { tab in
+            ForEach(visibleTabs) { tab in
                     TabButton(label: tab.label, icon: tab.icon, selected: coordinator.currentView == tab.view) {
                         withAnimation(.smooth) {
                             coordinator.currentView = tab.view

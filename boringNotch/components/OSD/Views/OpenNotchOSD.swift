@@ -15,6 +15,7 @@ struct OpenNotchOSD: View {
     @Binding var icon: String
     @Binding var accent: Color?
     @Default(.showOpenNotchOSDPercentage) var showPercentage
+    @Default(.notchGlassStrength) var glassStrength
     
     var body: some View {
         HStack(spacing: 8) {
@@ -48,11 +49,9 @@ struct OpenNotchOSD: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
-        .background(
-            Capsule()
-                .fill(Color.black)
-                .stroke(Color.white.opacity(0.1), lineWidth: 1)
-        )
+        // Liquid Glass on macOS 26+ (Tahoe); falls back to the solid black
+        // capsule on macOS 14–15 where .glassEffect() doesn't exist yet.
+        .osdGlassCapsule(strength: glassStrength)
     }
     
     func updateSystemValue(_ newVal: CGFloat) {
@@ -63,6 +62,24 @@ struct OpenNotchOSD: View {
             BrightnessManager.shared.setAbsolute(value: Float32(newVal))
         default:
             break
+        }
+    }
+}
+
+/// Applies the notch OSD's background: Apple's Liquid Glass material on
+/// macOS 26+, or the original solid black capsule on earlier systems.
+/// Wrapped in `#available` so the app still compiles for its macOS 14 target.
+private extension View {
+    @ViewBuilder
+    func osdGlassCapsule(strength: Double) -> some View {
+        if #available(macOS 26.0, *) {
+            self.glassEffect(.regular.tint(.black.opacity(strength)), in: Capsule())
+        } else {
+            self.background(
+                Capsule()
+                    .fill(Color.black)
+                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
+            )
         }
     }
 }
