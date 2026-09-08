@@ -87,6 +87,21 @@ closing snapped shut abruptly.)
   fast it opens and closes. The speed now applies to **both** the notch shape *and* the
   content (we made `StandardAnimations.interactive` honor the speed multiplier).
 
+### 5. System tab (disk usage)
+**What:** a **System** tab in the notch — currently shows each mounted volume's
+**used / free / total** space with a color-coded bar (green → orange → red as it fills up).
+It's one tab designed to hold future system stats (RAM, CPU, battery health) as extra
+sections, so those don't each grab their own tab slot.
+- **Where:** `boringNotch/private/DiskManager.swift` (reads volume space, refreshes every
+  30s) and `boringNotch/private/SystemView.swift` (the tab UI).
+- **Free space shown both ways:** the headline "free" is the **available** figure (includes
+  purgeable space — matches Finder / About This Mac); when purgeable space exists it also
+  shows the **raw free** number (matches Disk Utility's bar) and how much is purgeable.
+- **Notes:** reads are sandbox-safe (any volume it can't read is skipped rather than crashing).
+- **Toggle:** Settings → Appearance → *Additional features* → **"System (disk usage)"**.
+- **Tabs:** tab icons were tightened for more clearance from the physical notch
+  (`TabButton` horizontal padding).
+
 ---
 
 ## How to build & run (self-signed, free — no paid Apple account)

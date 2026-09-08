@@ -592,6 +592,8 @@ struct ContentView: View {
                             )
                         case .clipboard:
                             ClipboardHistoryView()
+                        case .system:
+                            SystemView()
                         }
                     }
                 }

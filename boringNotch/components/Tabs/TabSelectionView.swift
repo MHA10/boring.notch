@@ -23,6 +23,7 @@ let tabs = [
 struct TabSelectionView: View {
     @ObservedObject var coordinator = BoringViewCoordinator.shared
     @Default(.enableClipboardHistory) var clipboardEnabled
+    @Default(.enableSystemTab) var systemEnabled
     @Namespace var animation
 
     /// Base tabs, plus the Clipboard tab only when the feature is enabled.
@@ -30,6 +31,9 @@ struct TabSelectionView: View {
         var result = tabs
         if clipboardEnabled {
             result.append(TabModel(label: "Clipboard", icon: "doc.on.clipboard.fill", view: .clipboard))
+        }
+        if systemEnabled {
+            result.append(TabModel(label: "System", icon: "speedometer", view: .system))
         }
         return result
     }

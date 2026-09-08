@@ -264,6 +264,9 @@ extension Defaults.Keys {
     static let enableClipboardHistory = Key<Bool>("enableClipboardHistory", default: true)
     static let clipboardHistory = Key<[ClipboardEntry]>("clipboardHistory", default: [])
 
+    // MARK: System tab (disk today; room for RAM/CPU/battery health)
+    static let enableSystemTab = Key<Bool>("enableSystemTab", default: true)
+
     static let showNotHumanFace = Key<Bool>("showNotHumanFace", default: false)
     static let tileShowLabels = Key<Bool>("tileShowLabels", default: false)
     static let showCalendar = Key<Bool>("showCalendar", default: false)

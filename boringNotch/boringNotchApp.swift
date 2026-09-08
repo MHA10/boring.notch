@@ -141,6 +141,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // the enableClipboardHistory setting).
         ClipboardManager.shared.start()
 
+        // Start disk-usage polling from launch.
+        DiskManager.shared.start()
+
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(screenConfigurationDidChange),

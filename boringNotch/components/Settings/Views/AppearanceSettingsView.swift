@@ -96,12 +96,15 @@ struct AppearanceSettingsView: View {
                 Defaults.Toggle(key: .enableClipboardHistory) {
                     Text("Clipboard history")
                 }
+                Defaults.Toggle(key: .enableSystemTab) {
+                    Text("System (disk usage)")
+                }
             } header: {
                 HStack {
                     Text("Additional features")
                 }
             } footer: {
-                Text("Keeps your last 30 copied text snippets in a notch tab. Items a password manager marks secret are ignored.")
+                Text("Clipboard history keeps your last 30 copied items (text + images) in a notch tab; items a password manager marks secret are ignored. The System tab shows disk usage (with room for more system stats later).")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
