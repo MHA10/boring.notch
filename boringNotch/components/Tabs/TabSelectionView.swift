@@ -73,7 +73,7 @@ struct TabSelectionView: View {
                     })
                     .offset(x: dragKey == tab.key ? dragOffset : 0)
                     .zIndex(dragKey == tab.key ? 1 : 0)
-                    .gesture(dragGesture(tab.key))
+                    .gesture(dragGesture(tab))
             }
         }
         .coordinateSpace(name: space)
@@ -98,22 +98,22 @@ struct TabSelectionView: View {
                 }
             }
             .contentShape(Rectangle())
-            .onTapGesture {
-                withAnimation(.smooth) { coordinator.currentView = tab.view }
-            }
     }
 
     /// Manual reorder: follows the pointer, reorders `order` as it crosses slots,
     /// and persists on release. Uses a frame snapshot so it's not async-stale.
-    private func dragGesture(_ key: String) -> some Gesture {
-        DragGesture(minimumDistance: 6, coordinateSpace: .named(space))
+    private func dragGesture(_ tab: TabModel) -> some Gesture {
+        let key = tab.key
+        return DragGesture(minimumDistance: 0, coordinateSpace: .named(space))
             .onChanged { value in
-                if dragKey != key {
+                // Below the threshold it's still a potential click, not a drag.
+                if dragKey == nil {
+                    guard abs(value.translation.width) >= 6 else { return }
                     dragKey = key
                     slotXs = frames.values.map(\.midX).sorted()
                     dragStartMidX = frames[key]?.midX ?? 0
                 }
-                guard !slotXs.isEmpty else { return }
+                guard dragKey == key, !slotXs.isEmpty else { return }
                 let cursorX = dragStartMidX + value.translation.width
                 var target = 0
                 var best = CGFloat.greatestFiniteMagnitude
@@ -130,9 +130,15 @@ struct TabSelectionView: View {
                 dragOffset = cursorX - slotXs[min(target, slotXs.count - 1)]
             }
             .onEnded { _ in
-                withAnimation(.smooth(duration: 0.2)) { dragOffset = 0 }
-                dragKey = nil
-                if order != savedOrder { savedOrder = order }
+                if dragKey == key {
+                    // A drag finished → keep the new order.
+                    withAnimation(.smooth(duration: 0.2)) { dragOffset = 0 }
+                    dragKey = nil
+                    if order != savedOrder { savedOrder = order }
+                } else {
+                    // No drag → it was a click → select this tab.
+                    withAnimation(.smooth) { coordinator.currentView = tab.view }
+                }
             }
     }
 

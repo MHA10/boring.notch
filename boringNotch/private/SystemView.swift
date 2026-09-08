@@ -74,9 +74,6 @@ struct SystemView: View {
                             }
                         }
                         .contentShape(Rectangle())
-                        .onTapGesture {
-                            withAnimation(.smooth(duration: 0.2)) { subTab = tab }
-                        }
                         .background(GeometryReader { geo in
                             Color.clear.preference(
                                 key: TabFramePreference.self,
@@ -85,7 +82,7 @@ struct SystemView: View {
                         })
                         .offset(x: subDragKey == key ? subDragOffset : 0)
                         .zIndex(subDragKey == key ? 1 : 0)
-                        .gesture(subDragGesture(key))
+                        .gesture(subDragGesture(tab))
                 }
             }
         }
@@ -93,15 +90,17 @@ struct SystemView: View {
         .onPreferenceChange(TabFramePreference.self) { subFrames = $0 }
     }
 
-    private func subDragGesture(_ key: String) -> some Gesture {
-        DragGesture(minimumDistance: 6, coordinateSpace: .named(subSpace))
+    private func subDragGesture(_ tab: SystemSubTab) -> some Gesture {
+        let key = tab.rawValue
+        return DragGesture(minimumDistance: 0, coordinateSpace: .named(subSpace))
             .onChanged { value in
-                if subDragKey != key {
+                if subDragKey == nil {
+                    guard abs(value.translation.width) >= 6 else { return }
                     subDragKey = key
                     subSlotXs = subFrames.values.map(\.midX).sorted()
                     subDragStartMidX = subFrames[key]?.midX ?? 0
                 }
-                guard !subSlotXs.isEmpty else { return }
+                guard subDragKey == key, !subSlotXs.isEmpty else { return }
                 let cursorX = subDragStartMidX + value.translation.width
                 var target = 0
                 var best = CGFloat.greatestFiniteMagnitude
@@ -118,9 +117,13 @@ struct SystemView: View {
                 subDragOffset = cursorX - subSlotXs[min(target, subSlotXs.count - 1)]
             }
             .onEnded { _ in
-                withAnimation(.smooth(duration: 0.2)) { subDragOffset = 0 }
-                subDragKey = nil
-                if subOrder != savedSubOrder { savedSubOrder = subOrder }
+                if subDragKey == key {
+                    withAnimation(.smooth(duration: 0.2)) { subDragOffset = 0 }
+                    subDragKey = nil
+                    if subOrder != savedSubOrder { savedSubOrder = subOrder }
+                } else {
+                    withAnimation(.smooth(duration: 0.2)) { subTab = tab }
+                }
             }
     }
 
