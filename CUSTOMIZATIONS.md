@@ -133,6 +133,44 @@ over non-scrolling areas.
 - **Where:** `pointerIsOverScrollView()` in `boringNotch/extensions/PanGesture.swift` — the
   scroll-wheel gesture monitor ignores scrolls landing on an `NSScrollView` / `NSClipView`.
 
+### 9. Scrolling a notch list no longer scrolls the window behind it
+**What:** scrolling the Clipboard/System list (especially at the top/bottom of the list, or
+over a non-list part of the notch) used to also scroll whatever window sat *behind* the notch
+— e.g. the web page or document underneath. The notch floats on top of everything, so any
+scroll it didn't fully use was being handed down to the window below. Now that leftover scroll
+stops at the notch.
+- **Where:** `ScrollConsumingHostingView` in `boringNotch/managers/NotchWindowManager.swift` —
+  a small `NSHostingView` subclass used as the notch's root view. It overrides `scrollWheel`
+  and deliberately does **not** pass the event on, so any scroll that bubbles up unhandled is
+  consumed instead of falling through to the window behind. Normal in-list scrolling is
+  handled by the list's own scroll view first, so lists still scroll as before.
+- **Gaps / empty panel space:** a scroll landing on a transparent spot of the open notch — the
+  thin gaps between list rows, or empty panel space — still leaked, because the notch's
+  Liquid-Glass background doesn't answer hit-testing, so macOS found no view in the notch to
+  give the scroll to and handed it to the window underneath. (A SwiftUI
+  `.contentShape(Rectangle())` doesn't help here — it only affects SwiftUI's gesture system,
+  not AppKit scroll routing.) Fixed with `ScrollSink` in `boringNotch/private/ScrollSink.swift`
+  — a transparent AppKit view laid behind the **open** panel whose `hitTest` returns itself, so
+  every point of the open notch belongs to the notch and the scroll stops there. It sits behind
+  the real content (rows/buttons are still hit first) and is added only while the notch is open
+  (the closed notch must stay scroll/click-through around it). Wired in `ContentView.swift` as a
+  `.background { … }` on the notch panel.
+
+### 10. Permissions section in Settings
+**What:** a new **Settings → Permissions** page that lists every macOS permission the app can
+use, explains in plain words what each is for, shows whether it's currently granted
+(green/red/orange badge), and gives a one-tap button to either ask for it in-app or jump
+straight to the exact System Settings pane. Added because it was hard to tell which permission
+a given feature needed. Covers: Accessibility (notifications + media keys), Automation (control
+Spotify/Apple Music/Messages), Camera (mirror), System audio (waveform), Calendars, Reminders,
+and Contacts (notification photos + WhatsApp replies).
+- **Where:** `boringNotch/private/PermissionsSettingsView.swift` — holds both the
+  `PermissionsManager` (reads and requests each permission; Accessibility status comes over XPC
+  from the helper process) and the `PermissionsSettingsView`. Wired into the settings sidebar
+  in `boringNotch/components/Settings/SettingsView.swift` (new `.permissions` tab, second in
+  the list). Badges refresh on appear and whenever the app returns to the front, so flipping a
+  switch in System Settings updates them automatically.
+
 ---
 
 ## How to build & run (self-signed, free — no paid Apple account)

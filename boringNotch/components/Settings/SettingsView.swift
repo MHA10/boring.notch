@@ -11,6 +11,7 @@ import SwiftUIIntrospect
 
 private enum SettingsTab: String, CaseIterable, Identifiable {
     case general
+    case permissions
     case appearance
     case media
     case notifications
@@ -28,6 +29,7 @@ private enum SettingsTab: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .general: "General"
+        case .permissions: "Permissions"
         case .appearance: "Appearance"
         case .media: "Media"
         case .notifications: "Notifications"
@@ -45,6 +47,7 @@ private enum SettingsTab: String, CaseIterable, Identifiable {
     var systemImage: String {
         switch self {
         case .general: "gear"
+        case .permissions: "lock.shield"
         case .appearance: "eye"
         case .media: "play.laptopcomputer"
         case .notifications: "bell.badge"
@@ -87,6 +90,8 @@ struct SettingsView: View {
                 switch selectedTab {
                 case .general:
                     GeneralSettings()
+                case .permissions:
+                    PermissionsSettingsView()
                 case .appearance:
                     AppearanceSettingsView()
                 case .media:

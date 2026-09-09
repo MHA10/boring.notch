@@ -235,17 +235,28 @@ struct ContentView: View {
                         vm.notchState == .open ? openedInsets.top : cornerRadiusInsets.closed.bottom
                     )
                     .padding([.horizontal, .bottom], vm.notchState == .open ? 12 : 0)
-                    // Animate the WIDTH between the physical notch width and the
-                    // full panel width so the shape grows/shrinks in BOTH
-                    // dimensions from the notch (a true morph), instead of the
-                    // width snapping to full while only the height animates.
+                    // Animate the WIDTH to the full panel width when OPEN (a true
+                    // both-dimensions morph). When CLOSED, keep width intrinsic
+                    // (nil) so the music live activity — album art + waveform that
+                    // sit BESIDE the physical notch — isn't clipped to the narrow
+                    // notch width.
                     .frame(
-                        width: vm.notchState == .open ? openNotchSize.width : vm.closedNotchSize.width,
+                        width: vm.notchState == .open ? openNotchSize.width : nil,
                         alignment: .top
                     )
                     // Liquid Glass panel when open (macOS 26+); solid black when
                     // closed so it still blends into the physical hardware notch.
                     .notchPanelBackground(isOpen: vm.notchState == .open, shape: currentNotchShape, strength: glassStrength)
+                    // A real AppKit layer that owns every point of the OPEN panel
+                    // for hit-testing, so scrolls over transparent gaps (between
+                    // list rows, empty panel space — the Liquid-Glass background
+                    // doesn't answer hitTest) stop at the notch instead of
+                    // leaking through to the window behind it. Behind the content,
+                    // so rows/buttons are still hit first. Open-only: the closed
+                    // notch must stay scroll/click-through around it.
+                    .background {
+                        if vm.notchState == .open { ScrollSink() }
+                    }
                     .clipShape(currentNotchShape)
                           .overlay(alignment: .top) {
                               displayClosedNotchHeight.isZero && vm.notchState == .closed ? nil

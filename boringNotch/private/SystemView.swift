@@ -52,6 +52,11 @@ struct SystemView: View {
                     case .disk: diskSection
                     }
                 }
+                // Make the whole area (including gaps between rows) hit-testable,
+                // so a scroll in a gap routes into the list instead of falling
+                // through to the window behind the notch.
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
             }
         }
         .padding(.horizontal, 12)

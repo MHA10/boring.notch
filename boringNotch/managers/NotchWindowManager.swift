@@ -132,7 +132,7 @@ final class NotchWindowManager {
             window.disableSkyLight()
         }
 
-        window.contentView = NSHostingView(
+        window.contentView = ScrollConsumingHostingView(
             rootView: ContentView()
                 .environmentObject(viewModel)
         )
@@ -386,5 +386,46 @@ final class NotchWindowManager {
     func cleanup() {
         cleanupDragDetectors()
         cleanupWindows()
+    }
+}
+
+/// NSHostingView subclass that swallows scroll-wheel events which bubble all
+/// the way up to it unhandled.
+///
+/// ── IN SIMPLE WORDS ──
+/// The notch floats on top of everything else on screen. If you scroll a list
+/// inside the notch (like the clipboard history) and hit the top or bottom, or
+/// if you scroll over a part of the notch that isn't a list, macOS used to
+/// take that "leftover" scroll and hand it to whatever window is sitting
+/// BEHIND the notch — so the web page or document underneath would scroll too.
+/// This view is the outermost container of everything drawn in the notch;
+/// catching the leftover scroll here stops it from ever reaching the window
+/// behind.
+///
+/// ── WHY IT'S BUILT THIS WAY (change at your peril) ──
+/// A scroll event that the notch's inner ScrollView doesn't fully consume
+/// travels up the responder chain. If it reaches NSWindow still unhandled,
+/// AppKit forwards it to the window underneath the (non-opaque, overlay-space)
+/// notch panel — the visible bug where "the page behind also scrolled".
+/// Overriding scrollWheel here — the root ancestor of all SwiftUI content —
+/// and deliberately NOT calling super marks the event handled, so it never
+/// falls through. A normal in-list scroll is consumed by the list's own
+/// NSScrollView long before it can reach this view, so lists still scroll.
+///
+/// ── DO NOT ──
+/// - Do NOT call super.scrollWheel here — that reintroduces the fall-through.
+/// - Do NOT expect this to affect the scroll-to-open/close notch gesture: that
+///   is driven by a separate NSEvent monitor in PanGesture.swift, not the
+///   responder chain, so it is untouched by this override.
+final class ScrollConsumingHostingView<Content: View>: NSHostingView<Content> {
+    required init(rootView: Content) { super.init(rootView: rootView) }
+
+    @available(*, unavailable)
+    required init?(coder aDecoder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    override func scrollWheel(with event: NSEvent) {
+        // Intentionally consume: any scroll reaching this outermost view was
+        // declined by every inner view, so let it stop here rather than fall
+        // through to the window behind the notch.
     }
 }

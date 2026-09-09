@@ -52,6 +52,11 @@ struct ClipboardHistoryView: View {
                             row(entry)
                         }
                     }
+                    // Make the whole list area (including the gaps between rows)
+                    // hit-testable, so a scroll in a gap routes into the list
+                    // instead of falling through to the window behind the notch.
+                    .frame(maxWidth: .infinity)
+                    .contentShape(Rectangle())
                 }
             }
         }
