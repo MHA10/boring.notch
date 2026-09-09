@@ -118,6 +118,11 @@ the System tab opens to whichever sub-tab is first.
   tab frames (`TabFramePreference`) and reorders live — SwiftUI's `.onDrag`/`.onDrop` didn't
   fire reliably in the floating panel. Order persists via Defaults keys `tabOrder` and
   `systemSubTabOrder`.
+- **Removing tabs (declutter):** every tab except Home can be turned off, so the bar shows only
+  what you use — Clipboard (`enableClipboardHistory`), System (`enableSystemTab`), Reminders
+  (`enableRemindersTab`) in *Appearance → Additional features*, and Shelf (`boringShelf`) in
+  *Shelf* settings. `enabledKeys` in `TabSelectionView.swift` gates each on its setting (Shelf is
+  now gated too — turning it off removes the tab and the closed-notch shelf).
 
 ### 7. Hover-to-open scoped to the notch
 **What:** with the notch closed, it now opens only when the pointer is actually over the
@@ -182,6 +187,24 @@ there are 13 tabs with many controls and hunting for one was tedious.
   is empty the normal tab list shows; when non-empty it shows matching settings and selecting
   one sets the tab and clears the search. **Keep `settingsIndex` in sync when settings are added
   or renamed** (it's a hand-maintained list, not auto-generated).
+
+### 12. Reminders tab
+**What:** a standalone **Reminders** notch tab (separate from Calendar — the Calendar tab is
+read-only and this is for people who use Reminders, not Calendar). It lists your unfinished
+reminders (soonest due first, overdue in red), lets you **add** a new one (title + due date +
+custom time + which list), and **tick them off** by tapping the circle. Needs Reminders access;
+until granted it shows a "Grant access" / "Open Settings" prompt. Toggle the tab in
+**Appearance → Additional features → "Reminders"** (on by default; searchable via "reminders").
+- **Where:**
+  - `boringNotch/private/RemindersManager.swift` — self-contained `EKEventStore` manager (read
+    incomplete reminders, create, mark complete, list the reminder lists). Never prompts on its
+    own: `loadIfAuthorized()` reads only when access is already granted; `requestAccess()` (the
+    prompt) fires only from the "Grant access" button. Refreshes on `EKEventStoreChanged`.
+  - `boringNotch/private/RemindersView.swift` — the tab UI (add form with title field, date +
+    time `DatePicker`, list `Picker`; the reminder list with complete-circles).
+  - Tab plumbing: `NotchViews.reminders` (`enums/generic.swift`), `allTabs` + `enabledKeys`
+    (`components/Tabs/TabSelectionView.swift`), the `.reminders` case in `ContentView.swift`,
+    and keys `enableRemindersTab` + `tabOrder` default in `models/Constants.swift`.
 
 ---
 

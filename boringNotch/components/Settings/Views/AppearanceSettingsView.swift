@@ -99,12 +99,15 @@ struct AppearanceSettingsView: View {
                 Defaults.Toggle(key: .enableSystemTab) {
                     Text("System (disk usage)")
                 }
+                Defaults.Toggle(key: .enableRemindersTab) {
+                    Text("Reminders")
+                }
             } header: {
                 HStack {
                     Text("Additional features")
                 }
             } footer: {
-                Text("Clipboard history keeps your last 30 copied items (text + images) in a notch tab; items a password manager marks secret are ignored. The System tab shows disk usage (with room for more system stats later).")
+                Text("Clipboard history keeps your last 30 copied items (text + images) in a notch tab; items a password manager marks secret are ignored. The System tab shows disk usage. The Reminders tab lets you view, add, and complete reminders from the notch (needs Reminders access).")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

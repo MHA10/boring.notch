@@ -605,6 +605,8 @@ struct ContentView: View {
                             ClipboardHistoryView()
                         case .system:
                             SystemView()
+                        case .reminders:
+                            RemindersView()
                         }
                     }
                 }

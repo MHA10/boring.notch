@@ -22,7 +22,8 @@ private let allTabs: [TabModel] = [
     TabModel(key: "home", label: "Home", icon: "house.fill", view: .home),
     TabModel(key: "shelf", label: "Shelf", icon: "tray.fill", view: .shelf),
     TabModel(key: "clipboard", label: "Clipboard", icon: "doc.on.clipboard.fill", view: .clipboard),
-    TabModel(key: "system", label: "System", icon: "speedometer", view: .system)
+    TabModel(key: "system", label: "System", icon: "speedometer", view: .system),
+    TabModel(key: "reminders", label: "Reminders", icon: "checklist", view: .reminders)
 ]
 
 /// Collects each reorderable item's frame (in a named space) so a manual drag
@@ -36,8 +37,10 @@ struct TabFramePreference: PreferenceKey {
 
 struct TabSelectionView: View {
     @ObservedObject var coordinator = BoringViewCoordinator.shared
+    @Default(.boringShelf) var shelfEnabled
     @Default(.enableClipboardHistory) var clipboardEnabled
     @Default(.enableSystemTab) var systemEnabled
+    @Default(.enableRemindersTab) var remindersEnabled
     @Default(.tabOrder) var savedOrder
     @Namespace var animation
 
@@ -51,9 +54,11 @@ struct TabSelectionView: View {
     private let space = "maintabs"
 
     private var enabledKeys: [String] {
-        var keys = ["home", "shelf"]
+        var keys = ["home"]
+        if shelfEnabled { keys.append("shelf") }
         if clipboardEnabled { keys.append("clipboard") }
         if systemEnabled { keys.append("system") }
+        if remindersEnabled { keys.append("reminders") }
         return keys
     }
 

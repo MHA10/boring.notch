@@ -300,6 +300,7 @@ struct SettingsView: View {
         .init(title: "Glass strength", keywords: "liquid glass transparency tint see-through wallpaper", tab: .appearance),
         .init(title: "Clipboard history", keywords: "copy paste clipboard history images", tab: .appearance),
         .init(title: "System tab (disk usage)", keywords: "disk cpu memory ram system stats", tab: .appearance),
+        .init(title: "Reminders tab", keywords: "reminders todo tasks add reminder checklist tab", tab: .appearance),
 
         // Media
         .init(title: "Media controls", keywords: "buttons play pause skip volume", tab: .media),

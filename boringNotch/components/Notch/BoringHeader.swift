@@ -16,7 +16,12 @@ struct BoringHeader: View {
     var body: some View {
         HStack(spacing: 0) {
             HStack {
-                if (!shelfState.isEmpty || coordinator.alwaysShowTabs) && Defaults[.boringShelf] {
+                // Show the tab bar based on the "Always show tabs" preference or
+                // when the shelf has content — NOT gated on the shelf being
+                // enabled. (It used to require boringShelf, which hid ALL tabs —
+                // Clipboard/System/Reminders included — whenever the shelf was
+                // turned off.)
+                if coordinator.alwaysShowTabs || !shelfState.isEmpty {
                     TabSelectionView()
                 } else if vm.notchState == .open {
                     EmptyView()
