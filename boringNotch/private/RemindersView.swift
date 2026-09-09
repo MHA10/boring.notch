@@ -6,6 +6,14 @@
 //  reminders, add a new one (title + due date + time + which list), and tick
 //  them off. Independent of the Calendar tab.
 //
+//  ── WHY THE WINDOW-KEY DANCE ──
+//  The notch is a non-activating panel that refuses keyboard focus by default
+//  (so a click on it never steals focus from the frontmost app). A text field
+//  can only be typed into while the window is key, so focusing the "New
+//  reminder" field flips `BoringNotchSkyLightWindow.wantsKeyForTextInput` on
+//  (which makes the window key), and it's turned back off when the tab goes
+//  away. Without this the field is visible but swallows every keystroke.
+//
 
 import AppKit
 import SwiftUI
@@ -19,8 +27,11 @@ struct RemindersView: View {
     @State private var selectedListID: String?
     @State private var errorText: String?
 
+    @FocusState private var titleFocused: Bool
+    @State private var hostWindow: BoringNotchSkyLightWindow?
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Text("Reminders")
                     .font(.headline)
@@ -40,12 +51,16 @@ struct RemindersView: View {
             if manager.authorized {
                 addForm
                 list
+                    .frame(maxHeight: .infinity)
             } else {
                 accessPrompt
             }
         }
         .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        .padding(.top, 6)
+        .padding(.bottom, 8)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(RemindersWindowAccessor { hostWindow = $0 as? BoringNotchSkyLightWindow })
         .onAppear {
             Task {
                 await manager.loadIfAuthorized()
@@ -53,6 +68,17 @@ struct RemindersView: View {
             }
         }
         .onChange(of: manager.lists.count) { _, _ in syncSelectedList() }
+        // Let the field actually receive keystrokes: the notch window only
+        // accepts them while it's key (see file header).
+        .onChange(of: titleFocused) { _, focused in
+            if focused { hostWindow?.wantsKeyForTextInput = true }
+        }
+        .onChange(of: hostWindow) { _, window in
+            if titleFocused { window?.wantsKeyForTextInput = true }
+        }
+        .onDisappear {
+            hostWindow?.wantsKeyForTextInput = false
+        }
     }
 
     // MARK: - Add form
@@ -61,11 +87,13 @@ struct RemindersView: View {
         VStack(spacing: 6) {
             HStack(spacing: 8) {
                 Image(systemName: "plus.circle.fill")
+                    .font(.system(size: 14))
                     .foregroundStyle(.gray)
                 TextField("New reminder…", text: $newTitle)
                     .textFieldStyle(.plain)
                     .font(.system(size: 13))
                     .foregroundStyle(.white)
+                    .focused($titleFocused)
                     .onSubmit(add)
                 Button("Add", action: add)
                     .buttonStyle(.borderedProminent)
@@ -113,7 +141,7 @@ struct RemindersView: View {
             }
         }
         .padding(8)
-        .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.06)))
+        .background(RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.07)))
     }
 
     // MARK: - List
@@ -165,11 +193,13 @@ struct RemindersView: View {
                 }
             }
             Spacer(minLength: 8)
-            Text(item.listTitle)
-                .font(.system(size: 10))
-                .foregroundStyle(.gray)
-                .lineLimit(1)
-            Circle().fill(item.listColor).frame(width: 8, height: 8)
+            HStack(spacing: 5) {
+                Circle().fill(item.listColor).frame(width: 7, height: 7)
+                Text(item.listTitle)
+                    .font(.system(size: 10))
+                    .foregroundStyle(.gray)
+                    .lineLimit(1)
+            }
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 6)
@@ -179,13 +209,13 @@ struct RemindersView: View {
     // MARK: - Access prompt
 
     private var accessPrompt: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 6) {
             Spacer(minLength: 0)
             Image(systemName: "checklist")
-                .font(.title)
+                .font(.system(size: 24))
                 .foregroundStyle(.gray)
             Text("Reminders access needed")
-                .font(.subheadline)
+                .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.white)
             Text("Grant access to view and add reminders from the notch.")
                 .font(.caption)
@@ -244,9 +274,20 @@ struct RemindersView: View {
     }
 
     private static func defaultDue() -> Date {
-        // Default to the next full hour, so a new timed reminder isn't in the past.
         let cal = Calendar.current
         let base = cal.date(byAdding: .hour, value: 1, to: Date()) ?? Date()
         return cal.date(bySetting: .minute, value: 0, of: base) ?? base
     }
+}
+
+/// Resolves the enclosing notch window so a focused text field can ask it to
+/// become key (see the file header).
+private struct RemindersWindowAccessor: NSViewRepresentable {
+    let onResolve: (NSWindow?) -> Void
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        DispatchQueue.main.async { onResolve(view.window) }
+        return view
+    }
+    func updateNSView(_ nsView: NSView, context: Context) {}
 }
