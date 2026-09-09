@@ -171,6 +171,18 @@ and Contacts (notification photos + WhatsApp replies).
   the list). Badges refresh on appear and whenever the app returns to the front, so flipping a
   switch in System Settings updates them automatically.
 
+### 11. Search box in Settings
+**What:** a search field at the top of the Settings sidebar. Type any setting name (or a
+synonym — e.g. "dark" finds window shadow, "startup" finds launch-at-login, "wallpaper" finds
+glass strength) and the sidebar switches to a list of matching individual settings, each
+labelled with the tab it lives on. Clicking a result jumps straight to that tab. Added because
+there are 13 tabs with many controls and hunting for one was tedious.
+- **Where:** `boringNotch/components/Settings/SettingsView.swift` — a curated `settingsIndex`
+  (`SettingEntry` = title + synonym keywords + which tab) drives the filter. When the search box
+  is empty the normal tab list shows; when non-empty it shows matching settings and selecting
+  one sets the tab and clears the search. **Keep `settingsIndex` in sync when settings are added
+  or renamed** (it's a hand-maintained list, not auto-generated).
+
 ---
 
 ## How to build & run (self-signed, free — no paid Apple account)
